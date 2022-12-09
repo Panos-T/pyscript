@@ -1,0 +1,282 @@
+/*******************************************************************************************
+  SIMPL+ Module Information*
+******************************************************************************************/
+/*
+System Name:SkyQ Control
+System Number:
+Programmer:Panagiotis Triantafyllopoulos
+Comments:A driver for SkyQ Boxes control, with Python library pyskyqremote 0.3.21
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+*******************************************************************************************/
+#SYMBOL_NAME "SkyQ v1.0"
+#HINT "SkyQ control with python"
+#DEFINE_CONSTANT STRING_SIZE 256
+#CATEGORY "8" // Media Resource
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+#HELP_BEGIN
+   A driver for SkyQ Boxes control, with Python library pyskyqremote 0.3.21. 
+	Resources:
+		https://pypi.org/project/pyskyqremote/#description
+		https://github.com/RogerSelwyn/skyq_remote
+#HELP_END
+
+/*******************************************************************************************
+  Include Libraries
+*******************************************************************************************/
+#CRESTRON_SIMPLSHARP_LIBRARY "SimplPlusPythonAdapter" 
+  
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+*******************************************************************************************/
+DIGITAL_INPUT Connect, Power_Toggle, Channel_Up, Channel_Down, DPad_Up, DPad_Down, DPad_Right, DPad_Left, Select, Dismiss;
+DIGITAL_INPUT Interactive, Sidebar, Help, Services, Search, TVguide, Home, i, Text, Red, Green, Yellow, Blue ;
+// ANALOG_INPUT 
+// STRING_INPUT 
+// BUFFER_INPUT 
+
+DIGITAL_OUTPUT Connection_FB, Power_FB;
+// ANALOG_OUTPUT 
+// STRING_OUTPUT 
+
+/*******************************************************************************************
+  Parameters
+*******************************************************************************************/
+STRING_PARAMETER _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_;
+STRING_PARAMETER _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, ip[12];
+
+/*******************************************************************************************
+  Parameter Properties
+*******************************************************************************************/
+#BEGIN_PARAMETER_PROPERTIES ip
+	propValidUnits =  unitString;
+	propDefaultValue = "192.168.1.10";
+#END_PARAMETER_PROPERTIES
+
+
+
+
+/*******************************************************************************************
+  Global Variables
+*******************************************************************************************/
+// INTEGER
+// LONG_INTEGER
+// SIGNED_INTEGER
+// SIGNED_LONG_INTEGER
+STRING cmd[STRING_SIZE];
+STRING g_ID[STRING_SIZE];
+
+
+
+PythonModule pModule;
+
+/*******************************************************************************************
+  Functions
+*******************************************************************************************/
+Function Run_Script()
+{
+	integer status;
+	StringList args;
+	g_ID = PythonAdapterUtils.NewGuid; 
+          
+    args.Add(cmd);
+    
+	if (cmd = "connect"){
+		args.Add(ip);
+		trace("Connecting to ip: %s", ip);
+    }
+
+
+	status = PythonInterface.RunWithArgs(g_ID, "/user/python/pyscript.py", pModule, args);
+          
+	
+	if (status = 0)
+	{
+		trace("Call to Python Succesfull");
+	}
+	else
+	{
+		trace("Failed to communicate status: %d", status);
+	}
+	
+}
+ 
+
+callback function DataReceivedHandler(PythonModule sender, PythonAdapterDataReceivedEventArgs e)
+{
+
+	trace("e.Data = %s\r\n", e.Data);
+    
+
+
+	if (e.Data = "connection_fb_1")
+		{
+			Connection_FB = 1;
+		}  
+	else if (e.Data = "connection_fb_0")
+		{
+			Connection_FB = 0;
+		}  
+	else if (e.Data = "power_fb_1")
+		{
+			Power_FB = 1;
+		}  
+	else if (e.Data = "power_fb_0")
+		{
+			Power_FB = 0;
+		}
+}
+
+/*
+Integer_Function MyIntFunction1()
+{
+    // TODO:  Add local variable declarations here
+
+    // TODO:  Add code here
+
+    Return (0);
+}
+*/
+
+/*
+String_Function MyStrFunction1()
+{
+    // TODO:  Add local variable declarations here
+
+    // TODO:  Add code here
+
+    Return ("");
+}
+*/
+
+/*******************************************************************************************
+  Event Handlers
+*******************************************************************************************/
+
+PUSH Connect
+{
+    cmd = "connect";
+	Run_Script();
+}
+
+
+PUSH Power_Toggle
+{
+    cmd = "power";
+	Run_Script();
+}
+ 
+
+
+PUSH Channel_Up
+{
+    cmd = "channelup";
+	Run_Script();
+}
+
+PUSH Channel_Down
+{
+    cmd = "channeldown";
+	Run_Script();
+}
+
+
+PUSH DPad_Up
+{
+    cmd = "up";
+	Run_Script();
+}
+
+PUSH DPad_Down
+{
+    cmd = "down";
+	Run_Script();
+}
+
+PUSH DPad_Right
+{
+    cmd = "right";
+	Run_Script();
+}
+
+PUSH DPad_Left
+{
+    cmd = "left";
+	Run_Script();
+}
+
+PUSH Select
+{
+    cmd = "select";
+	Run_Script();
+}
+
+PUSH Dismiss
+{
+    cmd = "dismiss";
+	Run_Script();
+}
+
+/*
+RELEASE input
+{
+    // TODO:  Add code here
+}
+*/
+
+
+
+
+/*
+EVENT
+{
+    // TODO:  Add code here
+}
+*/
+
+/*
+SOCKETCONNECT
+{
+    // TODO:  Add code here
+}
+*/
+
+/*
+SOCKETDISCONNECT
+{
+    // TODO:  Add code here
+}
+*/
+
+/*
+SOCKETRECEIVE
+{
+    // TODO:  Add code here
+}
+*/
+
+/*
+SOCKETSTATUS
+{
+    // TODO:  Add code here
+}
+*/
+
+/*******************************************************************************************
+  Main()
+*******************************************************************************************/
+
+Function Main()
+{	RegisterDelegate(PythonInterface, DataReceived, DataReceivedHandler);
+	WaitForInitializationComplete();
+
+	
+
+    cmd = "connect";
+	Run_Script();
+}
+
